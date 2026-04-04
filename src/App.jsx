@@ -25,6 +25,7 @@ function App() {
       const tasks = await getTasks();
       setHistory(tasks.slice(0, 10));
     } catch (error) {
+      console.error('Failed to load history from Firebase.', error);
       showToast({ type: 'error', message: `Failed to load history: ${error.message}` });
     }
   }, [showToast]);
@@ -41,14 +42,18 @@ function App() {
       const createdTaskId = await createTask(prompt, { aspectRatio, nFrames, removeWatermark });
       setTaskId(createdTaskId);
       showToast({ type: 'success', message: 'Task created successfully.' });
+      console.info(`Task ${createdTaskId} created successfully.`);
 
       try {
         await saveTask(createdTaskId, prompt);
+        console.info(`Task ${createdTaskId} stored in Firebase successfully.`);
+        showToast({ type: 'success', message: 'Task data stored in Firebase successfully.' });
         loadHistory();
       } catch (error) {
+        console.error(`Task ${createdTaskId} could not be stored in Firebase.`, error);
         showToast({
           type: 'error',
-          message: `Task created, but Firestore save failed: ${error.message}`,
+          message: `Task created, but data was not stored in Firebase: ${error.message}`,
         });
       }
     } catch (error) {
@@ -101,6 +106,7 @@ function App() {
 
         setStatus({ state: 'processing' });
       } catch (error) {
+        console.error(`Failed to check status for task ${normalizedId}.`, error);
         setStatus({ state: 'failed', error: error.message || 'Failed to fetch status.' });
         if (showErrors) {
           showToast({ type: 'error', message: error.message || 'Failed to check status.' });

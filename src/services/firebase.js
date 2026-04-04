@@ -26,16 +26,33 @@ if (hasFirebaseConfig) {
   db = getFirestore(app);
 }
 
+const isPermissionDeniedError = (error) =>
+  error?.code === 'permission-denied' ||
+  error?.message?.toLowerCase().includes('missing or insufficient permissions');
+
+const toFirebaseActionError = (action, error) => {
+  if (isPermissionDeniedError(error)) {
+    return new Error(
+      `Firebase permission denied while trying to ${action}. Please update your Firestore security rules.`,
+    );
+  }
+  return error;
+};
+
 export const saveTask = async (taskId, prompt) => {
   if (!db) {
     throw new Error('Firebase is not configured. Add VITE_FIREBASE_* variables to .env.');
   }
 
-  await addDoc(collection(db, 'videoTasks'), {
-    taskId,
-    prompt,
-    createdAt: serverTimestamp(),
-  });
+  try {
+    await addDoc(collection(db, 'videoTasks'), {
+      taskId,
+      prompt,
+      createdAt: serverTimestamp(),
+    });
+  } catch (error) {
+    throw toFirebaseActionError('save task data', error);
+  }
 };
 
 export const getTasks = async () => {
@@ -43,10 +60,22 @@ export const getTasks = async () => {
     return [];
   }
 
-  const q = query(collection(db, 'videoTasks'), orderBy('createdAt', 'desc'));
-  const snapshot = await getDocs(q);
-  return snapshot.docs.map((doc) => ({
-    id: doc.id,
-    ...doc.data(),
-  }));
+  try {
+    const q = query(collection(db, 'videoTasks'), orderBy('createdAt', 'desc'));
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map((doc) => ({
+      id: doc.id,
+      ...doc.data(),
+    }));
+  } catch (error) {
+    if (isPermissionDeniedError(error)) {
+      console.error(
+        'Firebase read permission denied. Returning empty history. Check Firestore security rules.',
+        error,
+      );
+      return [];
+    }
+
+    throw toFirebaseActionError('load task history', error);
+  }
 };
