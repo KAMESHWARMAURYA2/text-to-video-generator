@@ -25,6 +25,7 @@ function App() {
       const tasks = await getTasks();
       setHistory(tasks.slice(0, 10));
     } catch (error) {
+      console.error('Failed to load history from Firebase.', error);
       showToast({ type: 'error', message: `Failed to load history: ${error.message}` });
     }
   }, [showToast]);
@@ -105,6 +106,7 @@ function App() {
 
         setStatus({ state: 'processing' });
       } catch (error) {
+        console.error(`Failed to check status for task ${normalizedId}.`, error);
         setStatus({ state: 'failed', error: error.message || 'Failed to fetch status.' });
         if (showErrors) {
           showToast({ type: 'error', message: error.message || 'Failed to check status.' });
