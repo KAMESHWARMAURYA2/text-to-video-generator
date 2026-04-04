@@ -41,14 +41,18 @@ function App() {
       const createdTaskId = await createTask(prompt, { aspectRatio, nFrames, removeWatermark });
       setTaskId(createdTaskId);
       showToast({ type: 'success', message: 'Task created successfully.' });
+      console.info(`Task ${createdTaskId} created successfully.`);
 
       try {
         await saveTask(createdTaskId, prompt);
+        console.info(`Task ${createdTaskId} stored in Firebase successfully.`);
+        showToast({ type: 'success', message: 'Task data stored in Firebase successfully.' });
         loadHistory();
       } catch (error) {
+        console.error(`Task ${createdTaskId} could not be stored in Firebase.`, error);
         showToast({
           type: 'error',
-          message: `Task created, but Firestore save failed: ${error.message}`,
+          message: `Task created, but data was not stored in Firebase: ${error.message}`,
         });
       }
     } catch (error) {

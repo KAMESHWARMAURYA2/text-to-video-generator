@@ -20,8 +20,10 @@ function VideoPlayer({ videoUrl, onToast }) {
       link.click();
       link.remove();
       URL.revokeObjectURL(blobUrl);
-      onToast({ type: 'success', message: 'Video downloaded.' });
+      console.info('Video has been successfully downloaded.');
+      onToast({ type: 'success', message: 'Video has been successfully downloaded.' });
     } catch (error) {
+      console.error('Video download failed.', error);
       onToast({ type: 'error', message: error.message || 'Failed to download video.' });
     } finally {
       setDownloading(false);
