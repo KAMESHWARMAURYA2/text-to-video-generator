@@ -1,12 +1,15 @@
-# Sora 2 Text-to-Video Generator (React + Vite + Tailwind)
+# Kie AI Text-to-Video Generator (React + Vite + Tailwind)
 
 Production-ready frontend-only web app that integrates directly with Kie AI APIs and stores task metadata in Firebase Firestore.
 
 ## Features
 
-- Create video generation tasks with model `sora-2-text-to-video`
-- Track task status by `taskId`
-- Parse `resultJson` and play generated video
+- Create video generation tasks with a switchable provider flag:
+  - Sora Jobs API (`sora-2-text-to-video`)
+  - Runway API (`runway-duration-5-generate`)
+- Switch models from the UI without changing core flow
+- Track task status by `taskId` (same status flow for both providers)
+- Parse provider response and play generated video
 - Download generated video as `.mp4`
 - Save `taskId`, `prompt`, and timestamp to Firestore
 - Tailwind responsive UI with toast notifications
