@@ -6,7 +6,15 @@ function Spinner() {
   );
 }
 
-function TaskStatus({ onCheckStatus, statusLoading, status, taskId: activeTaskId }) {
+function TaskStatus({
+  onCheckStatus,
+  statusLoading,
+  status,
+  taskId: activeTaskId,
+  provider,
+  providerOptions,
+  onProviderChange,
+}) {
   const [taskIdInput, setTaskIdInput] = useState(activeTaskId || '');
   const [autoPoll, setAutoPoll] = useState(true);
   const pollRef = useRef(null);
@@ -31,6 +39,21 @@ function TaskStatus({ onCheckStatus, statusLoading, status, taskId: activeTaskId
 
   return (
     <div className="space-y-4">
+      <div>
+        <label className="mb-2 block text-sm font-medium text-slate-200">API Provider for status check</label>
+        <select
+          value={provider}
+          onChange={(e) => onProviderChange(e.target.value)}
+          className="w-full rounded-xl border border-slate-700 bg-slate-900 px-3 py-2 text-slate-100 outline-none ring-indigo-400 transition focus:ring"
+        >
+          {providerOptions.map((option) => (
+            <option key={option.key} value={option.key}>
+              {option.label}
+            </option>
+          ))}
+        </select>
+      </div>
+
       <div className="flex flex-col gap-3 sm:flex-row">
         <input
           value={taskIdInput}
@@ -61,7 +84,11 @@ function TaskStatus({ onCheckStatus, statusLoading, status, taskId: activeTaskId
         <div className="rounded-xl border border-slate-700 bg-slate-900/60 p-3 text-sm text-slate-200">
           <p>
             <strong>Status:</strong> {status.state}
-            {status.state === 'processing' ? <span className="ml-2 inline-flex"><Spinner /></span> : null}
+            {status.state === 'processing' ? (
+              <span className="ml-2 inline-flex">
+                <Spinner />
+              </span>
+            ) : null}
           </p>
           {status.error ? <p className="mt-2 text-red-300">{status.error}</p> : null}
         </div>

@@ -4,7 +4,7 @@ import Toast from './components/Toast';
 import VideoForm from './components/VideoForm';
 import VideoPlayer from './components/VideoPlayer';
 import { getTasks, saveTask } from './services/firebase';
-import { createTask, getTaskStatus } from './services/kieApi';
+import { PROVIDER_OPTIONS, createTask, getTaskStatus } from './services/kieApi';
 
 function App() {
   const [taskId, setTaskId] = useState('');
@@ -14,6 +14,7 @@ function App() {
   const [loadingStatus, setLoadingStatus] = useState(false);
   const [history, setHistory] = useState([]);
   const [toast, setToast] = useState(null);
+  const [activeProvider, setActiveProvider] = useState('sora');
 
   const showToast = useCallback((nextToast) => {
     setToast(nextToast);
@@ -34,15 +35,18 @@ function App() {
     loadHistory();
   }, [loadHistory]);
 
-  const onGenerate = async ({ prompt, aspectRatio, nFrames, removeWatermark }) => {
+  const onGenerate = async (formValues) => {
+    const { prompt, provider } = formValues;
+
     try {
       setLoadingGenerate(true);
       setVideoUrl('');
       setStatus(null);
-      const createdTaskId = await createTask(prompt, { aspectRatio, nFrames, removeWatermark });
+      const createdTaskId = await createTask(prompt, formValues);
       setTaskId(createdTaskId);
+      setActiveProvider(provider);
       showToast({ type: 'success', message: 'Task created successfully.' });
-      console.info(`Task ${createdTaskId} created successfully.`);
+      console.info(`Task ${createdTaskId} created successfully (${provider}).`);
 
       try {
         await saveTask(createdTaskId, prompt);
@@ -85,7 +89,7 @@ function App() {
       try {
         setLoadingStatus(true);
         setStatus((prev) => ({ ...prev, state: 'processing', error: null }));
-        const res = await getTaskStatus(normalizedId);
+        const res = await getTaskStatus(normalizedId, activeProvider);
         setTaskId(normalizedId);
 
         if (res.state === 'success') {
@@ -115,16 +119,16 @@ function App() {
         setLoadingStatus(false);
       }
     },
-    [showToast],
+    [activeProvider, showToast],
   );
 
   return (
     <main className="min-h-screen bg-gradient-to-b from-slate-950 to-slate-900 px-4 py-8 text-slate-100">
       <div className="mx-auto max-w-5xl space-y-6">
         <header className="space-y-2 text-center">
-          <h1 className="text-3xl font-bold">Sora 2 Text-to-Video Generator</h1>
+          <h1 className="text-3xl font-bold">Kie AI Text-to-Video Generator</h1>
           <p className="text-sm text-slate-300">
-            Frontend-only React app using Kie AI APIs and Firestore metadata storage.
+            Frontend-only React app using Kie AI APIs (Sora/Runway) and Firestore metadata storage.
           </p>
           <p className="text-xs text-amber-300">
             Security note: frontend environment variables are visible in browser bundles. Use restricted API keys.
@@ -157,6 +161,9 @@ function App() {
               onCheckStatus={onCheckStatus}
               statusLoading={loadingStatus}
               status={status}
+              provider={activeProvider}
+              providerOptions={PROVIDER_OPTIONS}
+              onProviderChange={setActiveProvider}
             />
           </article>
         </section>
