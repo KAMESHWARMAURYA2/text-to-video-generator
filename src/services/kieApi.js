@@ -17,6 +17,14 @@ const PROVIDERS = {
     models: ['runway-duration-5-generate'],
     defaultModel: 'runway-duration-5-generate',
   },
+  veo: {
+    key: 'veo',
+    label: 'Veo Generate API',
+    createPath: '/veo/generate',
+    statusPath: '/veo/record-info',
+    models: ['veo3_fast'],
+    defaultModel: 'veo3_fast',
+  },
 };
 
 export const PROVIDER_OPTIONS = Object.values(PROVIDERS).map(({ key, label }) => ({ key, label }));
@@ -86,6 +94,28 @@ const createRunwayPayload = (prompt, config, model) => {
   return payload;
 };
 
+const createVeoPayload = (prompt, config, model) => {
+  const payload = {
+    prompt: prompt.trim(),
+    model,
+    watermark: config.watermark || 'kie.ai',
+    aspect_ratio: config.veoAspectRatio || '16:9',
+    seeds: Number.isFinite(Number(config.seeds)) ? Number(config.seeds) : 12345,
+    enableFallback: Boolean(config.enableFallback),
+    enableTranslation: config.enableTranslation !== false,
+    generationType: config.generationType || 'TEXT_TO_VIDEO',
+  };
+
+  const imageUrls = (config.imageUrls || '')
+    .split('\n')
+    .map((url) => url.trim())
+    .filter(Boolean);
+  if (imageUrls.length > 0) payload.imageUrls = imageUrls;
+  if (config.callBackUrl?.trim()) payload.callBackUrl = config.callBackUrl.trim();
+
+  return payload;
+};
+
 export const createTask = async (prompt, config) => {
   if (!prompt?.trim()) {
     throw new Error('Prompt is required.');
@@ -96,7 +126,9 @@ export const createTask = async (prompt, config) => {
   const payload =
     provider.key === 'runway'
       ? createRunwayPayload(prompt, config, model)
-      : createSoraPayload(prompt, config, model);
+      : provider.key === 'veo'
+        ? createVeoPayload(prompt, config, model)
+        : createSoraPayload(prompt, config, model);
 
   const response = await fetch(`${API_ROOT}${provider.createPath}`, {
     method: 'POST',
@@ -149,6 +181,21 @@ const extractVideoUrlFromRunway = (raw) => {
   return videoUrl;
 };
 
+const extractVideoUrlFromVeo = (raw) => {
+  const videoUrl = raw?.data?.response?.resultUrls?.[0] || null;
+  if (!videoUrl) {
+    throw new Error('Task succeeded but no video URL was found in response.resultUrls.');
+  }
+  return videoUrl;
+};
+
+const normalizeVeoState = (raw) => {
+  const successFlag = raw?.data?.successFlag;
+  if (successFlag === 1) return 'success';
+  if (successFlag === 0) return 'failed';
+  return 'processing';
+};
+
 export const getTaskStatus = async (taskId, providerKey = 'sora') => {
   if (!taskId?.trim()) {
     throw new Error('Task ID is required.');
@@ -170,14 +217,20 @@ export const getTaskStatus = async (taskId, providerKey = 'sora') => {
   }
 
   const data = await response.json();
-  const state = normalizeState(data?.data?.state);
+  const state = provider.key === 'veo' ? normalizeVeoState(data) : normalizeState(data?.data?.state);
   if (!state) {
     throw new Error('Invalid response: missing task state.');
   }
 
   let videoUrl = null;
   if (state === 'success') {
-    videoUrl = provider.key === 'runway' ? extractVideoUrlFromRunway(data) : extractVideoUrlFromSora(data);
+    if (provider.key === 'runway') {
+      videoUrl = extractVideoUrlFromRunway(data);
+    } else if (provider.key === 'veo') {
+      videoUrl = extractVideoUrlFromVeo(data);
+    } else {
+      videoUrl = extractVideoUrlFromSora(data);
+    }
   }
 
   return {

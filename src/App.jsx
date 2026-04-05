@@ -128,7 +128,7 @@ function App() {
         <header className="space-y-2 text-center">
           <h1 className="text-3xl font-bold">Kie AI Text-to-Video Generator</h1>
           <p className="text-sm text-slate-300">
-            Frontend-only React app using Kie AI APIs (Sora/Runway) and Firestore metadata storage.
+            Frontend-only React app using Kie AI APIs (Sora/Runway/Veo) and Firestore metadata storage.
           </p>
           <p className="text-xs text-amber-300">
             Security note: frontend environment variables are visible in browser bundles. Use restricted API keys.
