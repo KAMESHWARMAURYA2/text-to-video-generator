@@ -11,6 +11,7 @@ const initialState = {
   imageUrl: '',
   waterMark: 'kie.ai',
   callBackUrl: '',
+  duration: 5,
 };
 
 function VideoForm({ onGenerate, loading }) {
@@ -91,6 +92,19 @@ function VideoForm({ onGenerate, loading }) {
           </div>
 
           <div className="grid gap-4 sm:grid-cols-2">
+            <div>
+              <label className="mb-2 block text-sm font-medium text-slate-200">Duration (seconds)</label>
+              <select
+                value={form.duration}
+                onChange={(e) => update('duration', Number(e.target.value))}
+                className="w-full rounded-xl border border-slate-700 bg-slate-900 px-3 py-2 text-slate-100 outline-none ring-indigo-400 transition focus:ring"
+              >
+                <option value={5}>5</option>
+                <option value={8}>8</option>
+                <option value={10}>10</option>
+              </select>
+            </div>
+
             <div>
               <label className="mb-2 block text-sm font-medium text-slate-200">Watermark (optional)</label>
               <input

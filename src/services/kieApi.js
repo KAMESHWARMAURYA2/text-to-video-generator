@@ -72,9 +72,11 @@ const createSoraPayload = (prompt, config, model) => ({
 });
 
 const createRunwayPayload = (prompt, config, model) => {
+  const validDuration = [5, 8, 10].includes(Number(config.duration)) ? Number(config.duration) : 5;
   const payload = {
     prompt: prompt.trim(),
     model,
+    duration: validDuration,
   };
 
   if (config.imageUrl?.trim()) payload.imageUrl = config.imageUrl.trim();
