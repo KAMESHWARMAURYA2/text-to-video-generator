@@ -7,6 +7,7 @@ Production-ready frontend-only web app that integrates directly with Kie AI APIs
 - Create video generation tasks with a switchable provider flag:
   - Sora Jobs API (`sora-2-text-to-video`)
   - Runway API (`runway-duration-5-generate`)
+  - Veo API (`veo3_fast`)
 - Switch models from the UI without changing core flow
 - Track task status by `taskId` (same status flow for both providers)
 - Parse provider response and play generated video
